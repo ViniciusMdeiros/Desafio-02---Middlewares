@@ -25,16 +25,19 @@ function checksExistsUserAccount(request, response, next) {
 };
 
 function checksCreateTodosUserAvailability(request, response, next) {
-  const user = request;
+  const { user } = request;
 
-  const todo = user.todos.some(todo => todo.length >= 10);
+  if(user.pro){
 
-  if((user.pro === false) || (todo)){
+    return next();
+
+  } else if (!user.pro && user.todos.length +1 <= 10) {
     
-    return response.status(403).json({error: "User does not have the PRO plan or already has 10 or more!"});
-  } 
+    return next();
+  }
 
-  return next();
+  return response.status(403).json({error: "User does not have the PRO plan or already has 10 or more!"});
+  
 };
 
 function checksTodoExists(request, response, next) {
@@ -42,18 +45,20 @@ function checksTodoExists(request, response, next) {
   const {id: todoId} = request.params;
   
   const user = users.find(user => user.username === username);
-  const todo = user.todos.find(todo => todo.id === todoId);
 
-
-   if (!validate(todoId)) {
-
-    return response.status(400).json({error: "Invalid UUID ID!"});
-
-  } if(!user) {
+  if(!user) {
     
     return response.status(404).json({error: "Username not found!"});
 
-  } if (!todo) {
+  } else if (!validate(todoId)) {
+
+    return response.status(400).json({error: "Invalid UUID ID!"});
+
+  }  
+  
+  const todo = user.todos.find(todo => todo.id === todoId);
+
+  if (!todo) {
 
     return response.status(404).json({error: "Todo id not found!"});
 
@@ -66,9 +71,9 @@ function checksTodoExists(request, response, next) {
 };
 
 function findUserById(request, response, next) {
-  const {id: todoId} = request.params;
+  const {id} = request.params;
 
-  const user = users.find(user => user.id === todoId);
+  const user = users.find(user => user.id === id);
 
   if(!user) {
     return response.status(404).json({error: "Id not found!"});
